@@ -98,7 +98,7 @@ if($user){
 					  $output=$firstpic['source'];
 					  
 				  	  //$string="$user/{$imagecounter}.jpg";
-					  //save_image($output,$string); // Uncomment this if you want to download all of your pictures on facebook ,Remember to change the FolderPath to $user/UntaggedImages.
+					  //save_image($output,$string); 
 					  
 					  // Getting the likes ...
 					  
@@ -210,6 +210,9 @@ $tagged_photos=$facebook->api('me/photos');  // This will give a data structure 
 
 	///var_dump($firstPic);
 	//echo $firstPic;
+	
+	// Uncomment the next 2 lines if you want to download all of your pictures on facebook uploaded by other users but you are included in them.
+	
 	$path="$user/{$imagecounter}.jpg";
 	// save_image($pic,$path);
   	
@@ -233,7 +236,8 @@ $tagged_photos=$facebook->api('me/photos');  // This will give a data structure 
  
 	  }
 	  
-	  // Similar algorithm,as before ..
+	  // Similar algorithm,as before 
+	  
 				  if($tags>0)
 					  {
 						  if($tags>8)
@@ -373,6 +377,8 @@ $taggedImageCount=0;
 	  	$imageTag= $pictureDataTree->createElement("Image"); 
 	  	$imageTag=$taggedImagesXML->appendChild($imageTag);
 	
+		// Debug Statements 
+		
 		// echo $taggedImageData[$taggedImageCount]["score"]." and the image number is ".$taggedImageData[$taggedImageCount]["imageindex"];
 			// echo "<br />";
 		
