@@ -1,7 +1,7 @@
 <?php
 include_once "fbaccess.php";
 
-//Useful Function with PHP and CURL to save the image ..
+// Useful Function with PHP and CURL to save the image .Specify the Image URL followed by the File path on disk 
 
 function save_image($img,$fullpath){
     $ch = curl_init ($img);
@@ -9,8 +9,8 @@ function save_image($img,$fullpath){
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_BINARYTRANSFER,1);
     curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-  curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
-  curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+  	curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+  	curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
   
   
     $rawdata=curl_exec($ch);
@@ -61,9 +61,9 @@ if($user){
 	
 	$output=null;
 	
-	// Execute the BadgeCreator Application ,Comment this out if you do not need a badge .
-	$outputty=system("open /Users/rahulbudhiraja/Work/of_v0073_osx_release/apps/myApps/BadgeCreator/bin/BadgeCreatorDebug.app --args $id");
+	// Execute the BadgeCreator Application ,Comment this out if you need a badge .
 	
+	//$outputty=system("open /Users/rahulbudhiraja/Work/of_v0073_osx_release/apps/myApps/BadgeCreator/bin/BadgeCreatorDebug.app --args $id");
 	
 	$albums = $facebook->api('/me/albums?fields=id');  // This will give a data structure containing details of the Albums of the pictures that are uploaded by the user 
 	$pictures = array();
@@ -73,8 +73,7 @@ if($user){
 	      $pictures[$album['id']] = $pics['data']; // This gives the set of all photos in an album ....
 		
 	    }
-		
-		
+				
 	    $imagecounter=0;
 		$albumcounter=0;
   
@@ -98,9 +97,8 @@ if($user){
 					  $firstpic=$pic_array[$img_key];
 					  $output=$firstpic['source'];
 					  
-				  	  $string="$user/{$imagecounter}.jpg";
-					  
-				  	  //save_image($output,$string);
+				  	  //$string="$user/{$imagecounter}.jpg";
+					  //save_image($output,$string); // Uncomment this if you want to download all of your pictures on facebook ,Remember to change the FolderPath to $user/UntaggedImages.
 					  
 					  // Getting the likes ...
 					  
@@ -178,13 +176,7 @@ if($user){
 			$albumcounter++;
 		}
 	
-
-
-	
-	
-// -- --- ------ - -- - - - - - - - - - - - - --  - - - - - - -
-
-/// Now We have to download the images that the user is tagged in but are uploaded by other users ..
+// Now We have to get the images that the user is tagged in but are uploaded by other users ..
 	
 $tagged_photos=$facebook->api('me/photos');  // This will give a data structure containing details of the Albums of pictures that are uploaded by the user 
 
@@ -241,7 +233,7 @@ $tagged_photos=$facebook->api('me/photos');  // This will give a data structure 
  
 	  }
 	  
-	  
+	  // Similar algorithm,as before ..
 				  if($tags>0)
 					  {
 						  if($tags>8)
@@ -255,7 +247,7 @@ $tagged_photos=$facebook->api('me/photos');  // This will give a data structure 
   							"url"=>$pic
   					  	);
 					  }
-// 					  
+			  
 					  else {
 					  $score=($likes/2)+$numcomments;
   					  $untaggedImageData[]=array(
@@ -270,23 +262,44 @@ $tagged_photos=$facebook->api('me/photos');  // This will give a data structure 
 		
 }
 
-/* End of Downloading the Tagged Images */
+
 
 rsort($untaggedImageData);rsort($taggedImageData); // Sorting the Images in descending order of scores 
 
+// Debug Statements 
+
 // echo "<br />";
-// 
-// echo "Size of the untagged Array ".count($untaggedImageData);
-// 
-// echo "<br />";
-// 
+// echo "Size of the untagged Array ".count($untaggedImageData
+// echo "<br 
 // echo "Size of the tagged Array ".count($taggedImageData);
 
 mkdir($user.'/taggedImages',0777);
 mkdir($user.'/untaggedImages',0777);
 
-/////// Now we have to download the top 100 images ..
+/* Now we have to download the top 100 images and also create an xml file with details and ranking of the images .
 
+The Xml Structure is :
+
+ ImageList
+    |
+     -Untagged
+	      |
+		   -Image
+			   |
+				-Score
+				-AlbumNumber
+     -Tagged
+	      |
+		   -Image
+			   |
+				-Score
+				-AlbumNumber
+	
+*/	
+	
+	
+	
+// Create the XML Tree	and elements 
 
 $row=0;
 
@@ -302,11 +315,12 @@ $untaggedImages=$mainElement->appendChild($untaggedImages);
 
 $maxImagestoDownload=100; // Change this number if you want to download more images .
  
-// echo "trying the new sort method ..";
-
 $numberofUntaggedImagestoDownload=$maxImagestoDownload/2;
 $numberoftaggedImagestoDownload=$maxImagestoDownload/2;
 
+/* We try to download 50 untagged and 50 tagged images to have a nice balance,but if we have <50 on either array,we try to adjust the number of images that are to be downloaded.
+   For eg: there are 25 untagged images,75 tagged images will be downloaded 
+*/
 
 if(count($untaggedImageData)<$numberofUntaggedImagestoDownload)
 	$numberoftaggedImagestoDownload+=($numberofUntaggedImagestoDownload-count($untaggedImageData));
@@ -315,6 +329,8 @@ else if(count($taggedImageData)<$numberoftaggedImagestoDownload)
 	$numberofUntaggedImagestoDownload+=$numberoftaggedImagestoDownload-count($taggedImageData);
 
 // echo "Reached";
+
+// Downloading the untaggedImages ..
 
 while($row<count($untaggedImageData)&&$row<=$numberofUntaggedImagestoDownload)
 {
@@ -348,6 +364,9 @@ $taggedImagesXML=$mainElement->appendChild($taggedImagesXML);
 
 $taggedImageCount=0;
 
+// Downloading the TaggedImages ..
+
+
 	while($taggedImageCount <count($taggedImageData)&&$taggedImageCount<=$numberoftaggedImagestoDownload)
 	{
 		
@@ -362,7 +381,7 @@ $taggedImageCount=0;
 	
 		save_image($imgSource,$path);
 		
-		/// Adding the Image Information to the XML...
+		// Adding the Image Information to the XML like score and albumnumber .
 	
 	    $imageTag->appendChild($pictureDataTree->createElement('Score',$taggedImageData[$taggedImageCount]["score"]));
 	    $imageTag->appendChild($pictureDataTree->createElement('AlbumNumber',$taggedImageData[$taggedImageCount]["albumnum"]));
@@ -375,12 +394,15 @@ $taggedImageCount=0;
 
 	$pictureDataTree->save("$path");
 	
-	 // $folderPath=getcwd()."/$user"; // To check the path ...
+	 // $folderPath=getcwd()."/$user"; // To check the path 
 
-	 // In case you want to print the badge,you can uncomment this and change the path accordingly.
+	 // In case you want to apply a vignette filter using ImageMagick,you can uncomment this and change the path accordingly.
+	 
 	// $otputty2=system("open /Users/rahulbudhiraja/Work/of_v0073_osx_release/apps/myApps/NostalgiaVignetteExecution/bin/NostalgiaVignetteExecutionDebug.app --args $user");
+	
+	// logout of the user's account when finished download the images
 	include 'logout.php';
- 	// echo $otputty;
+
 
 		
 	
